@@ -1,0 +1,92 @@
+name: Build GD Skin Studio APK
+
+on:
+  workflow_dispatch:
+  push:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mod:
+    strategy:
+      fail-fast: false
+      matrix:
+        # BlueStacks (Pie64/Android 11) is 64-bit; add Android32 back for old 32-bit phones
+        target: [Android64]
+    name: Mod (${{ matrix.target }})
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      # turn compiler errors into public annotations (readable without signing in)
+      - run: echo "::add-matcher::.github/clang-matcher.json"
+      - uses: geode-sdk/build-geode-mod@main
+        with:
+          path: mod
+          sdk: v5.11.2
+          # bindings main is ahead of the 5.11.2 SDK; pin the commit from that release
+          bindings: geode-sdk/bindings
+          bindings-ref: 1012fcb37243286184d319404b15fd929098fd47
+          configure-args: -DSKIP_BUILDING_CODEGEN=OFF
+          combine: true
+          target: ${{ matrix.target }}
+
+  apk:
+    name: Build APK
+    runs-on: ubuntu-24.04
+    needs: mod
+    permissions:
+      contents: write   # to publish the APK as a release
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "::add-matcher::.github/clang-matcher.json"
+
+      - name: Combine mod builds
+        uses: geode-sdk/build-geode-mod/combine@main
+        id: combine
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skin-studio-mod
+          path: ${{ steps.combine.outputs.build-output }}
+
+      - name: Bundle mod into the APK
+        run: |
+          echo "combine output: ${{ steps.combine.outputs.build-output }}"
+          find "${{ steps.combine.outputs.build-output }}" -name '*.geode' -exec cp {} app/src/main/assets/mods/ \;
+          ls -la app/src/main/assets/mods
+          test -n "$(ls app/src/main/assets/mods/*.geode)"
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+          cache: gradle
+
+      - name: Build (debug-signed, installs directly)
+        run: |
+          chmod +x ./gradlew
+          ./gradlew app:assembleStandardDebug
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/standard/debug/app-standard-universal-debug.apk gd-skin-studio.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gd-skin-studio-apk
+          path: gd-skin-studio.apk
+
+      # Every build on main becomes a public release, so the newest APK is always at
+      # https://github.com/<owner>/<repo>/releases/latest/download/gd-skin-studio.apk
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" gd-skin-studio.apk \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "GD Skin Studio build ${{ github.run_number }}" \
+            --notes "Built from ${GITHUB_SHA::7}: $(git log -1 --pretty=%s)" \
+            --latest

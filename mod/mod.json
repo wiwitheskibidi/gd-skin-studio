@@ -1,0 +1,25 @@
+{
+	"geode": "5.11.2",
+	"gd": {
+		"android": "2.2081"
+	},
+	"id": "william.gd-skin-studio",
+	"name": "Skin Studio",
+	"version": "v1.0.0",
+	"developer": "William",
+	"description": "Unlocks every icon and colour, and turns your photos into custom icons.",
+	"settings": {
+		"unlock-all": {
+			"type": "bool",
+			"name": "Unlock every icon and colour",
+			"description": "Every cube, ship, ball, UFO, wave, robot, spider, swing, jetpack, trail, death effect, ship fire and colour can be picked in the icon kit. Turn off to go back to the ones you've really unlocked.",
+			"default": true
+		},
+		"show-photos": {
+			"type": "bool",
+			"name": "Show photo icons",
+			"description": "Turn off to see your normal icons again without losing the photos you picked. Photo icons only show on your screen; other players see your normal icon.",
+			"default": true
+		}
+	}
+}
