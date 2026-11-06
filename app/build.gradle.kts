@@ -248,8 +248,8 @@ android {
         applicationId = "com.william.gdskinstudio"
         minSdk = 23
         targetSdk = 37
-        versionCode = 31
-        versionName = "1.0.0-skins"
+        versionCode = 32
+        versionName = "1.0.1-skins"
 
         vectorDrawables {
             useSupportLibrary = true

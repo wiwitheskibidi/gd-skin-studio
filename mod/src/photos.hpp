@@ -29,6 +29,10 @@ namespace skins {
 
     cocos2d::CCTexture2D* photoTexture(std::string const& id);
 
+    // Writes the mod's saved choices to disk right away, so they survive the app being closed
+    // before GD gets to save.
+    void saveNow();
+
     // The icon kit preview is the only SimplePlayer that shows photos (others show other players).
     void showPhotosOn(SimplePlayer* player);
     void refreshPhoto(SimplePlayer* player);

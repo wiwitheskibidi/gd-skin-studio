@@ -123,6 +123,13 @@ namespace skins {
         auto info = infoFor(mode);
         if (!info) return;
         Mod::get()->setSavedValue<std::string>(savedKey(*info), id);
+        saveNow();
+    }
+
+    void saveNow() {
+        if (auto saved = Mod::get()->saveData(); saved.isErr()) {
+            log::warn("Couldn't save Skin Studio choices: {}", saved.unwrapErr());
+        }
     }
 
     std::string activePhoto(IconType mode) {
